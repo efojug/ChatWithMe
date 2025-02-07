@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,14 +37,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.efojug.chatwithme.ui.theme.ChatWithMeTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-//need login page to get userId
-val userId = 0
+//TODO need login page to get userId
+val currentUserId = 0
 
 //message data model
 data class Message(
@@ -55,20 +62,33 @@ class ChatViewModel : ViewModel() {
     private val _messages = MutableStateFlow<List<Message>>(emptyList())
     val messages: StateFlow<List<Message>> = _messages.asStateFlow()
 
+    init {
+        ChatWebSocketManager.connect("ws://127.0.0.1:4380")
+
+        viewModelScope.launch {
+            ChatWebSocketManager.messageFlow.collect { text ->
+                val incomingMessage = Message(content = text, userId = 2)
+                _messages.value = _messages.value + incomingMessage
+            }
+        }
+    }
+
     //simulate message send
     fun sendMessage(message: String) {
-        val userMessage = Message(content = message, userId = 1)
+        val userMessage = Message(content = message, userId = currentUserId)
         _messages.value = _messages.value + userMessage
+        ChatWebSocketManager.send(message)
 
         //reply
-        simulateReply(message)
+        simulateMessage(message)
     }
 
     //simulate reply
-    private fun simulateReply(message: String) {
-        kotlinx.coroutines.GlobalScope.launch {
+    @OptIn(DelicateCoroutinesApi::class)
+    fun simulateMessage(message: String, userId: Int = -1) {
+        GlobalScope.launch {
             delay(1000L)
-            val reply = Message(content = "got it: $message", userId = 2)
+            val reply = Message(content = "got it: $message", userId = userId)
             _messages.value = _messages.value + reply
         }
     }
@@ -83,7 +103,6 @@ fun ChatScreen(viewModel: ChatViewModel = ChatViewModel()) {
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
             title = { Text(text = "Chat") },
-//            Modifier.background(MaterialTheme.colorScheme.primary)
         )
         //message list
         LazyColumn(
@@ -104,18 +123,18 @@ fun ChatScreen(viewModel: ChatViewModel = ChatViewModel()) {
 @Composable
 fun MessageBubble(message: Message) {
     val bubbleColor =
-        if (message.userId == userId) MaterialTheme.colorScheme.primary else Color.LightGray
-    val alignment = if (message.userId == userId) Arrangement.End else Arrangement.Start
+        if (message.userId == currentUserId) MaterialTheme.colorScheme.primary else Color.LightGray
+    val alignment = if (message.userId == currentUserId) Arrangement.End else Arrangement.Start
 
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = alignment) {
         Box(
             modifier = Modifier
-                .background(bubbleColor)
-                .padding(8.dp)
+                .background(bubbleColor, shape = RoundedCornerShape(8.dp))
+                .padding(8.dp),
         ) {
             Text(
                 text = message.content,
-                color = if (message.userId == userId) Color.White else Color.Black
+                color = if (message.userId == currentUserId) Color.White else Color.Black
             )
         }
     }
@@ -147,7 +166,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MaterialTheme {
+            ChatWithMeTheme {
                 ChatScreen()
             }
         }

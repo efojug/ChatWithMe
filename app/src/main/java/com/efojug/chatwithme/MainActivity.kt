@@ -19,14 +19,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,15 +41,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.efojug.chatwithme.error.FailedToConnectServer
 import com.efojug.chatwithme.ui.theme.ChatWithMeTheme
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.getAndUpdate
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlin.collections.plus
 
 //TODO need login page to get userId
 val currentUserId = 0
@@ -59,15 +61,47 @@ data class Message(
 
 //viewmodel
 class ChatViewModel : ViewModel() {
-    private val _messages = MutableStateFlow<List<Message>>(emptyList())
-    val messages: StateFlow<List<Message>> = _messages.asStateFlow()
+    private val mutableState = MutableStateFlow(State())
+    val state: StateFlow<State> = mutableState
 
     init {
-        ChatWebSocketManager.connect("ws://100.99.103.78:4380/chat")
         viewModelScope.launch {
-            ChatWebSocketManager.messageFlow.collect { text ->
-                val incomingMessage = Message(content = text, userId = 2)
-                _messages.value = _messages.value + incomingMessage
+            try {
+                ChatWebSocketManager.connect(BuildConfig.CHAT_SERVER_BACKEND_URL)
+            } catch (e: FailedToConnectServer) {
+                mutableState.update {
+                    it.copy(
+                        isLoading = false, isOffline = true
+                    )
+                }
+                return@launch
+            }
+
+            launch {
+                ChatWebSocketManager.messageChannel.collect { text ->
+                    val incomingMessage = Message(content = text, userId = 2)
+                    mutableState.getAndUpdate {
+                        it.copy(
+                            message = it.message + incomingMessage
+                        )
+                    }
+                }
+            }
+
+            launch {
+                ChatWebSocketManager.errorFlow.collect {
+                    mutableState.getAndUpdate {
+                        val newMessage = it.message.dropLast(1).toMutableList()
+                        newMessage.add(
+                            it.message.last()
+                                .copy(content = "Send Failed: ${it.message.last().content}")
+                        )
+
+                        it.copy(
+                            message = newMessage
+                        )
+                    }
+                }
             }
         }
     }
@@ -75,7 +109,11 @@ class ChatViewModel : ViewModel() {
     //simulate message send
     fun sendMessage(message: String) {
         val userMessage = Message(content = message, userId = currentUserId)
-        _messages.value = _messages.value + userMessage
+        mutableState.getAndUpdate {
+            it.copy(
+                message = it.message + userMessage
+            )
+        }
         ChatWebSocketManager.send(message)
 
         //reply
@@ -83,39 +121,78 @@ class ChatViewModel : ViewModel() {
     }
 
     //simulate reply
-    @OptIn(DelicateCoroutinesApi::class)
     fun simulateMessage(message: String, userId: Int = -1) {
-        GlobalScope.launch {
+        viewModelScope.launch {
             delay(1000L)
             val reply = Message(content = "got it: $message", userId = userId)
-            _messages.value = _messages.value + reply
+            mutableState.getAndUpdate {
+                it.copy(
+                    message = it.message + reply
+                )
+            }
         }
     }
+
+    @Immutable
+    data class State(
+        val isLoading: Boolean = true,
+        val isOffline: Boolean = false,
+        val message: List<Message> = emptyList()
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(viewModel: ChatViewModel = ChatViewModel()) {
     //check message list
-    val messages by viewModel.messages.collectAsState()
+    val state by viewModel.state.collectAsState()
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Scaffold(topBar = {
         TopAppBar(
             title = { Text(text = "Chat") },
         )
-        //message list
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxSize()
-                .padding(8.dp)
-        ) {
-            items(messages) { message ->
-                MessageBubble(message = message)
-                Spacer(modifier = Modifier.height(4.dp))
+    }) { contentPadding ->
+        if (state.isLoading) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator()
+                Text("Connecting...")
             }
+            return@Scaffold
         }
-        ChatInput(onSend = { text -> viewModel.sendMessage(text) })
+
+        if (state.isOffline) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Failed to connect server !!!", color = Color.Red)
+            }
+            return@Scaffold
+        }
+
+        Column(
+            modifier = Modifier.padding(contentPadding)
+        ) {
+            //message list
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+                    .padding(8.dp)
+            ) {
+                items(state.message) { message ->
+                    MessageBubble(message = message)
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+            }
+
+            ChatInput(onSend = { text -> viewModel.sendMessage(text) })
+        }
     }
 }
 

@@ -25,17 +25,27 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            buildConfigField("String", "CHAT_SERVER_BACKEND_URL", "\"xxx.xxx\"")
+        }
+
+        debug {
+            buildConfigField("String", "CHAT_SERVER_BACKEND_URL", "\"ws://211.149.168.20:65001/chat\"")
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
+
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

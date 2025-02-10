@@ -26,11 +26,15 @@ android {
                 "proguard-rules.pro"
             )
 
-            buildConfigField("String", "CHAT_SERVER_BACKEND_URL", "\"xxx.xxx\"")
+            buildConfigField("String", "CHAT_SERVER_URL", "\"ws://100.99.103.78:4380/chat\"")
+            buildConfigField("String", "REGISTER_SERVER_URL", "\"http://100.99.103.78:4380/register\"")
+            buildConfigField("String", "LOGIN_SERVER_URL", "\"http://100.99.103.78:4380/login\"")
         }
 
         debug {
-            buildConfigField("String", "CHAT_SERVER_BACKEND_URL", "\"ws://211.149.168.20:65001/chat\"")
+            buildConfigField("String", "CHAT_SERVER_URL", "\"ws://100.99.103.78:4380/chat\"")
+            buildConfigField("String", "REGISTER_SERVER_URL", "\"http://100.99.103.78:4380/register\"")
+            buildConfigField("String", "LOGIN_SERVER_URL", "\"http://100.99.103.78:4380/login\"")
         }
     }
 
@@ -64,4 +68,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.okhttp)
+    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 }

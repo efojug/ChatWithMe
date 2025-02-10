@@ -39,18 +39,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.efojug.chatwithme.ui.theme.ChatWithMeTheme
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.collections.plus
 
 //TODO need login page to get userId
 val currentUserId = 0
+var connectionState = "None"
 
 //message data model
 data class Message(
@@ -63,8 +63,7 @@ class ChatViewModel : ViewModel() {
     val messages: StateFlow<List<Message>> = _messages.asStateFlow()
 
     init {
-        ChatWebSocketManager.connect("ws://127.0.0.1:4380")
-
+        ChatWebSocketManager.connect("ws://100.99.103.78:4380/chat")
         viewModelScope.launch {
             ChatWebSocketManager.messageFlow.collect { text ->
                 val incomingMessage = Message(content = text, userId = 2)
@@ -80,7 +79,7 @@ class ChatViewModel : ViewModel() {
         ChatWebSocketManager.send(message)
 
         //reply
-        simulateMessage(message)
+        simulateMessage(connectionState)
     }
 
     //simulate reply

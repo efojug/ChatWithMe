@@ -19,7 +19,7 @@ object ChatWebSocketManager {
         val request = Request.Builder().url(url).build()
         webSocket = client.newWebSocket(request, object : WebSocketListener() {
             override fun onOpen(webSocket: WebSocket, response: Response) {
-                ChatViewModel().simulateMessage("Connect Successfully!")
+                connectionState = "Connected Success"
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
@@ -29,13 +29,13 @@ object ChatWebSocketManager {
             }
 
             override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-                ChatViewModel().simulateMessage("Closing connection: $code/$reason")
+                connectionState = "Closing connection: $code/$reason"
                 webSocket.close(code, reason)
 
             }
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                ChatViewModel().simulateMessage("Connection failed: ${t.message}")
+                connectionState = "Connection failed: ${t.message}"
             }
         })
     }

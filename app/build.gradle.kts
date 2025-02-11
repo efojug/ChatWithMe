@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "2.1.10"
 }
 
 android {
@@ -26,15 +27,15 @@ android {
                 "proguard-rules.pro"
             )
 
-            buildConfigField("String", "CHAT_SERVER_URL", "\"ws://100.99.103.78:4380/chat\"")
-            buildConfigField("String", "REGISTER_SERVER_URL", "\"http://100.99.103.78:4380/register\"")
-            buildConfigField("String", "LOGIN_SERVER_URL", "\"http://100.99.103.78:4380/login\"")
+            buildConfigField("String", "CHAT_SERVER_URL", "\"ws://192.168.5.6:4380/chat\"")
+            buildConfigField("String", "REGISTER_SERVER_URL", "\"http://192.168.5.6:4380/register\"")
+            buildConfigField("String", "LOGIN_SERVER_URL", "\"http://192.168.5.6:4380/login\"")
         }
 
         debug {
-            buildConfigField("String", "CHAT_SERVER_URL", "\"ws://100.99.103.78:4380/chat\"")
-            buildConfigField("String", "REGISTER_SERVER_URL", "\"http://100.99.103.78:4380/register\"")
-            buildConfigField("String", "LOGIN_SERVER_URL", "\"http://100.99.103.78:4380/login\"")
+            buildConfigField("String", "CHAT_SERVER_URL", "\"ws://192.168.5.6:4380/chat\"")
+            buildConfigField("String", "REGISTER_SERVER_URL", "\"http://192.168.5.6:4380/register\"")
+            buildConfigField("String", "LOGIN_SERVER_URL", "\"http://192.168.5.6:4380/login\"")
         }
     }
 
@@ -68,6 +69,6 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.okhttp)
-    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 }

@@ -28,7 +28,10 @@ data class LoginResponse(val userId: Int, val username: String, val token: Strin
 sealed class AuthState {
     object Idle : AuthState()
     object Loading : AuthState()
-    data class Success(val userId: Int, val username: String, val token: String) : AuthState()
+    data class Success(
+        val userId: Int, val username: String, val token: String, val serverAddress: String
+    ) : AuthState()
+
     data class Error(val message: String) : AuthState()
 }
 
@@ -38,10 +41,10 @@ class AuthViewModel : ViewModel() {
         private set
     private val json = Json { ignoreUnknownKeys = true }
 
-    fun register(username: String, password: String) {
+    fun register(username: String, password: String, address: String) {
         authState = AuthState.Loading
-        if (username.isBlank() || password.isBlank()) {
-            authState = AuthState.Error("Username or password cannot be empty")
+        if (username.isBlank() || password.isBlank() || address.isBlank()) {
+            authState = AuthState.Error("Username/Password/ServerAddress cannot be empty")
             return
         } else if (username.length < 3) {
             authState = AuthState.Error("Username must be at least 3 characters long")
@@ -56,14 +59,17 @@ class AuthViewModel : ViewModel() {
                     "application/json".toMediaType(),
                     json.encodeToString(RegisterRequest(username, password))
                 )
-                val request =
-                    Request.Builder().url(BuildConfig.REGISTER_SERVER_URL).post(requestBody).build()
+                val request = Request.Builder().url("http://${address}/register").post(requestBody).build()
                 val response = withContext(Dispatchers.IO) {
                     client.newCall(request).execute()
                 }
                 if (response.isSuccessful) {
-                    authState =
-                        AuthState.Success(userId = 1, username = username, token = "registered")
+                    authState = AuthState.Success(
+                        userId = 1,
+                        username = username,
+                        token = "registered",
+                        serverAddress = address
+                    )
                     Toast.makeText(MyApplication.context, "Register success", Toast.LENGTH_SHORT)
                         .show()
                 } else {
@@ -78,10 +84,10 @@ class AuthViewModel : ViewModel() {
         }
     }
 
-    fun login(username: String, password: String) {
+    fun login(username: String, password: String, address: String) {
         authState = AuthState.Loading
-        if (username.isBlank() || password.isBlank()) {
-            authState = AuthState.Error("Username or password cannot be empty")
+        if (username.isBlank() || password.isBlank() || address.isBlank()) {
+            authState = AuthState.Error("Username/Password/ServerAddress cannot be empty")
             return
         }
         viewModelScope.launch {
@@ -90,8 +96,7 @@ class AuthViewModel : ViewModel() {
                     "application/json".toMediaType(),
                     json.encodeToString(LoginRequest(username, password))
                 )
-                val request =
-                    Request.Builder().url(BuildConfig.LOGIN_SERVER_URL).post(requestBody).build()
+                val request = Request.Builder().url("http://${address}/login").post(requestBody).build()
                 val response = withContext(Dispatchers.IO) {
                     client.newCall(request).execute()
                 }
@@ -101,7 +106,8 @@ class AuthViewModel : ViewModel() {
                         authState = AuthState.Success(
                             userId = loginResponse.userId,
                             username = loginResponse.username,
-                            token = loginResponse.token
+                            token = loginResponse.token,
+                            serverAddress = address
                         )
                         Toast.makeText(MyApplication.context, "Login success", Toast.LENGTH_SHORT)
                             .show()

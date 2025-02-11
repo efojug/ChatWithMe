@@ -42,7 +42,7 @@ object ChatWebSocketManager {
 
             override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                 t.printStackTrace()
-                continuation.resumeWithException(FailedToConnectServer())
+                continuation.resumeWithException(FailedToConnectServer(t.toString()))
             }
         })
     }

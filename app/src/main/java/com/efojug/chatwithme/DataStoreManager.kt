@@ -16,7 +16,7 @@ class DataStoreManager(private val context: Context) {
     companion object {
         val USERNAME_KEY = stringPreferencesKey("username")
         val PASSWORD_KEY = stringPreferencesKey("password")
-        val SERVER_URL_KEY = stringPreferencesKey("server_url")
+        val SERVER_ADDRESS_KEY = stringPreferencesKey("server_address")
         val SAVE_CREDENTIALS_KEY = booleanPreferencesKey("save_credentials")
         val AUTO_LOGIN_KEY = booleanPreferencesKey("auto_login")
     }
@@ -29,8 +29,8 @@ class DataStoreManager(private val context: Context) {
         preferences[PASSWORD_KEY]
     }
 
-    val serverUrlFlow: Flow<String?> = context.dataStore.data.map { preferences ->
-        preferences[SERVER_URL_KEY]
+    val serverAddressFlow: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[SERVER_ADDRESS_KEY]
     }
 
     val saveCredentialsFlow: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -59,9 +59,9 @@ class DataStoreManager(private val context: Context) {
         }
     }
 
-    suspend fun saveServerUrl(url: String) {
+    suspend fun saveServerAddress(address: String) {
         context.dataStore.edit { preferences ->
-            preferences[SERVER_URL_KEY] = url
+            preferences[SERVER_ADDRESS_KEY] = address
         }
     }
 

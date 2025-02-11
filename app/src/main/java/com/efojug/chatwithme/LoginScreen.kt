@@ -15,7 +15,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
-    authViewModel: AuthViewModel = viewModel(), onLoginSuccess: (Int, String, String) -> Unit
+    authViewModel: AuthViewModel = viewModel(),
+    onLoginSuccess: (Int, String, String, String) -> Unit
 ) {
     val context = LocalContext.current
     val dataStoreManager = DataStoreManager(context)
@@ -23,7 +24,7 @@ fun LoginScreen(
 
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var serverUrl by remember { mutableStateOf("") }
+    var serverAddress by remember { mutableStateOf("") }
     var saveCredentialsChecked by remember { mutableStateOf(false) }
     var autoLoginChecked by remember { mutableStateOf(false) }
     val authState = authViewModel.authState
@@ -31,7 +32,7 @@ fun LoginScreen(
     fun saveCredential() {
         coroutineScope.launch {
             dataStoreManager.saveUsername(username)
-            dataStoreManager.saveServerUrl(serverUrl)
+            dataStoreManager.saveServerAddress(serverAddress)
             if (saveCredentialsChecked) {
                 dataStoreManager.saveSaveCredentials(true)
                 dataStoreManager.savePassword(password)
@@ -57,9 +58,9 @@ fun LoginScreen(
     }
 
     LaunchedEffect(Unit) {
-        dataStoreManager.serverUrlFlow.collect { storedServerUrl ->
-            if (storedServerUrl != null) {
-                serverUrl = storedServerUrl
+        dataStoreManager.serverAddressFlow.collect { storedServerAddress ->
+            if (storedServerAddress != null) {
+                serverAddress = storedServerAddress
             }
         }
     }
@@ -79,7 +80,7 @@ fun LoginScreen(
             autoLoginChecked = storedAutoLogin
             if (saveCredentialsChecked && autoLoginChecked) {
                 delay(500L)
-                authViewModel.login(username, password)
+                authViewModel.login(username, password, serverAddress)
                 saveCredential()
             }
         }
@@ -107,9 +108,9 @@ fun LoginScreen(
         )
         Spacer(modifier = Modifier.height(8.dp))
         TextField(
-            value = serverUrl,
-            onValueChange = { serverUrl = it },
-            label = { Text("Server URL") },
+            value = serverAddress,
+            onValueChange = { serverAddress = it },
+            label = { Text("Server Address") },
             modifier = Modifier.fillMaxWidth()
         )
         Row(
@@ -146,12 +147,12 @@ fun LoginScreen(
 
         Row {
             Button(onClick = {
-                authViewModel.login(username, password)
+                authViewModel.login(username, password, serverAddress)
                 saveCredential()
             }) { Text("Login") }
             Spacer(modifier = Modifier.width(16.dp))
             Button(onClick = {
-                authViewModel.register(username, password)
+                authViewModel.register(username, password, serverAddress)
                 saveCredential()
             }) { Text("Register") }
         }
@@ -169,7 +170,7 @@ fun LoginScreen(
                 // 登录/注册成功后通知上层切换界面
                 LaunchedEffect(authState) {
                     onLoginSuccess(
-                        authState.userId, authState.username, authState.token
+                        authState.userId, authState.username, authState.token, serverAddress
                     )
                 }
             }

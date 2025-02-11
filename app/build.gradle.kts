@@ -21,21 +21,11 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-
-            buildConfigField("String", "CHAT_SERVER_URL", "\"ws://192.168.5.6:4380/chat\"")
-            buildConfigField("String", "REGISTER_SERVER_URL", "\"http://192.168.5.6:4380/register\"")
-            buildConfigField("String", "LOGIN_SERVER_URL", "\"http://192.168.5.6:4380/login\"")
-        }
-
-        debug {
-            buildConfigField("String", "CHAT_SERVER_URL", "\"ws://192.168.5.6:4380/chat\"")
-            buildConfigField("String", "REGISTER_SERVER_URL", "\"http://192.168.5.6:4380/register\"")
-            buildConfigField("String", "LOGIN_SERVER_URL", "\"http://192.168.5.6:4380/login\"")
         }
     }
 
@@ -67,7 +57,6 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

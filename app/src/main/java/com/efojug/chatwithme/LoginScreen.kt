@@ -149,12 +149,12 @@ fun LoginScreen(
             Button(onClick = {
                 authViewModel.login(username, password, serverAddress)
                 saveCredential()
-            }) { Text("Login") }
+            }, enabled = authState != AuthState.Loading) { Text("Login") }
             Spacer(modifier = Modifier.width(16.dp))
             Button(onClick = {
                 authViewModel.register(username, password, serverAddress)
                 saveCredential()
-            }) { Text("Register") }
+            }, enabled = authState != AuthState.Loading) { Text("Register") }
         }
         Spacer(modifier = Modifier.height(16.dp))
         when (authState) {

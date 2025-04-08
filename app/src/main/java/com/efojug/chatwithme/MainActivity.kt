@@ -170,6 +170,11 @@ class ChatViewModel : ViewModel() {
             try {
                 Log.e("", "try connect ws://${currentServer}/chat")
                 ChatWebSocketManager.connect("ws://${currentServer}/chat")
+                mutableState.update {
+                    it.copy(
+                        isLoading = false, isOffline = false
+                    )
+                }
             } catch (e: FailedToConnectServer) {
                 Log.e("", e.toString())
                 mutableState.update {

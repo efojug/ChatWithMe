@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
@@ -170,6 +171,11 @@ class ChatViewModel : ViewModel() {
             try {
                 Log.e("", "try connect ws://${currentServer}/chat")
                 ChatWebSocketManager.connect("ws://${currentServer}/chat")
+                mutableState.update {
+                    it.copy(
+                        isLoading = false, isOffline = false
+                    )
+                }
             } catch (e: FailedToConnectServer) {
                 Log.e("", e.toString())
                 mutableState.update {
@@ -251,16 +257,20 @@ class MainActivity : ComponentActivity() {
         setContent {
             var loggedIn by remember { mutableStateOf(false) }
             ChatWithMeTheme {
-                if (!loggedIn) {
-                    LoginScreen(onLoginSuccess = { userId, username, token, serverAddress ->
-                        currentUserId = userId
-                        currentUsername = username
-                        currentToken = token
-                        currentServer = serverAddress
-                        loggedIn = true
-                    })
-                } else {
-                    ChatScreen()
+                Surface(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    if (!loggedIn) {
+                        LoginScreen(onLoginSuccess = { userId, username, token, serverAddress ->
+                            currentUserId = userId
+                            currentUsername = username
+                            currentToken = token
+                            currentServer = serverAddress
+                            loggedIn = true
+                        })
+                    } else {
+                        ChatScreen()
+                    }
                 }
             }
         }

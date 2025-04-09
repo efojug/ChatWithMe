@@ -37,7 +37,7 @@ sealed class AuthState {
 }
 
 class AuthViewModel : ViewModel() {
-    private val client = HttpUtil.getInstance()
+    private val client = HttpManager.getInstance()
     var authState by mutableStateOf<AuthState>(AuthState.Idle)
         private set
     private val json = Json { ignoreUnknownKeys = true }

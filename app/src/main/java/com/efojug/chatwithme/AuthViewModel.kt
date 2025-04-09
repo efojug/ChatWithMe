@@ -13,6 +13,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 
 //TODO all support
 
@@ -36,7 +37,7 @@ sealed class AuthState {
 }
 
 class AuthViewModel : ViewModel() {
-    private val client = OkHttpClient()
+    private val client = HttpUtil.getInstance()
     var authState by mutableStateOf<AuthState>(AuthState.Idle)
         private set
     private val json = Json { ignoreUnknownKeys = true }
@@ -55,11 +56,9 @@ class AuthViewModel : ViewModel() {
         }
         viewModelScope.launch {
             try {
-                val requestBody = RequestBody.create(
-                    "application/json".toMediaType(),
-                    json.encodeToString(RegisterRequest(username, password))
-                )
-                val request = Request.Builder().url("http://${address}/register").post(requestBody).build()
+                val requestBody = json.encodeToString(RegisterRequest(username, password))
+                    .toRequestBody("application/json".toMediaType())
+                val request = Request.Builder().url("${address}/register").post(requestBody).build()
                 val response = withContext(Dispatchers.IO) {
                     client.newCall(request).execute()
                 }
@@ -92,11 +91,9 @@ class AuthViewModel : ViewModel() {
         }
         viewModelScope.launch {
             try {
-                val requestBody = RequestBody.create(
-                    "application/json".toMediaType(),
-                    json.encodeToString(LoginRequest(username, password))
-                )
-                val request = Request.Builder().url("http://${address}/login").post(requestBody).build()
+                val requestBody = json.encodeToString(LoginRequest(username, password))
+                    .toRequestBody("application/json".toMediaType())
+                val request = Request.Builder().url("${address}/login").post(requestBody).build()
                 val response = withContext(Dispatchers.IO) {
                     client.newCall(request).execute()
                 }

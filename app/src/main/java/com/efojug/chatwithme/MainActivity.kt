@@ -124,6 +124,7 @@ fun ChatScreen(viewModel: ChatViewModel = viewModel<ChatViewModel>()) {
                     .padding(8.dp)
             ) {
                 items(state.message) { message ->
+                    //todo
                     MessageBubble(message = message, 999)
                     Spacer(modifier = Modifier.height(4.dp))
                 }
@@ -169,6 +170,7 @@ class ChatViewModel : ViewModel() {
     init {
         viewModelScope.launch {
             try {
+                //todo
                 Log.e("", "try connect ws://${currentServer}/chat")
                 ChatWebSocketManager.connect("ws://${currentServer}/chat")
                 mutableState.update {
@@ -215,7 +217,7 @@ class ChatViewModel : ViewModel() {
         }
     }
 
-    //simulate message send
+    //todo simulate message send
     fun sendMessage(message: String) {
         val userMessage = Message(content = message, userId = currentUserId)
         mutableState.getAndUpdate {
@@ -225,11 +227,11 @@ class ChatViewModel : ViewModel() {
         }
         ChatWebSocketManager.send(message)
 
-        //reply
+        //todo reply
         simulateMessage("test reply")
     }
 
-    //simulate reply
+    //todo simulate reply
     fun simulateMessage(message: String, userId: Int = -1) {
         viewModelScope.launch {
             delay(1000L)

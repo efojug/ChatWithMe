@@ -1,5 +1,7 @@
 package com.efojug.chatwithme;
 
+import android.annotation.SuppressLint;
+
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -19,21 +21,27 @@ import javax.net.ssl.X509TrustManager;
 import okhttp3.ConnectionPool;
 import okhttp3.OkHttpClient;
 
+/**
+ * @author efojug
+ */
 public class HttpManager {
     private static volatile OkHttpClient okHttpClient;
-    private static ConnectionPool connectionPool = new ConnectionPool();
+    private static final ConnectionPool CONNECTION_POOL = new ConnectionPool();
 
     private static HostnameVerifier getHostnameVerifier() {
         return (s, sslSession) -> true;
     }
 
+    @SuppressLint("CustomX509TrustManager")
     private static TrustManager[] getTrustManager() {
         return new TrustManager[]{new X509TrustManager() {
+            @SuppressLint("TrustAllX509TrustManager")
             @Override
             public void checkClientTrusted(X509Certificate[] x509Certificates, String s) {
 
             }
 
+            @SuppressLint("TrustAllX509TrustManager")
             @Override
             public void checkServerTrusted(X509Certificate[] x509Certificates, String s) {
 
@@ -68,7 +76,7 @@ public class HttpManager {
         if (okHttpClient == null) {
             synchronized (OkHttpClient.class) {
                 if (okHttpClient == null) {
-                    okHttpClient = new OkHttpClient.Builder().connectionPool(connectionPool).sslSocketFactory(getSSLSocketFactory(), getX509TrustManager()).hostnameVerifier(getHostnameVerifier()).connectTimeout(15, TimeUnit.SECONDS).writeTimeout(10, TimeUnit.SECONDS).readTimeout(10, TimeUnit.SECONDS).build();
+                    okHttpClient = new OkHttpClient.Builder().connectionPool(CONNECTION_POOL).sslSocketFactory(getSSLSocketFactory(), getX509TrustManager()).hostnameVerifier(getHostnameVerifier()).connectTimeout(15, TimeUnit.SECONDS).writeTimeout(10, TimeUnit.SECONDS).readTimeout(10, TimeUnit.SECONDS).build();
                     okHttpClient.dispatcher().setMaxRequestsPerHost(200);
                     okHttpClient.dispatcher().setMaxRequests(200);
                 }
